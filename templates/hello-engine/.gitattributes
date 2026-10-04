@@ -1,0 +1,8 @@
+# Keep the wrapper runnable across platforms even after a fresh checkout.
+* text=auto eol=lf
+gradlew text eol=lf
+*.bat   text eol=crlf
+*.jar   binary
+*.png   binary
+*.wav   binary
+*.ogg   binary

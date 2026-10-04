@@ -1,0 +1,151 @@
+name: Release
+
+# DevOps-owned release automation. Tag-driven so releases are repeatable and
+# every release maps to exactly one commit. See docs/devops/release-process.md.
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, without the leading v (e.g. 0.1.0)."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Releases never overlap.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build & publish release
+    runs-on: ubuntu-latest
+    # Protected environment: required reviewers and release-only secrets live here.
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version and tag
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            TAG="v${VERSION}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+            VERSION="${TAG#v}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag ${TAG} (version ${VERSION})"
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle (with caching)
+        uses: gradle/actions/setup-gradle@v4
+
+      # `build` depends on `check`, so this also enforces the QA quality gate.
+      - name: Build, test and stamp the release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew build \
+            --init-script gradle/release-init.gradle.kts \
+            -Pstratix.version=${{ steps.version.outputs.version }} \
+            --no-daemon --stacktrace
+
+      # DX (STR-7) owns the distributable task; skip cleanly until it lands.
+      - name: Package distributions (DX task, optional)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ./gradlew tasks --all -q | grep -qE '^assembleDist\b'; then
+            ./gradlew assembleDist \
+              --init-script gradle/release-init.gradle.kts \
+              -Pstratix.version=${{ steps.version.outputs.version }} \
+              --no-daemon --stacktrace
+          else
+            echo "::warning::assembleDist task not found; packaging pending (STR-7). Releasing build JARs only."
+          fi
+
+      - name: Collect release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          find . -path ./.git -prune -o \
+            \( -path '*/build/libs/*.jar' -o -path '*/build/distributions/*' \) \
+            -type f -print -exec cp {} release-assets/ \; || true
+          echo "Assets:"
+          ls -la release-assets || true
+
+      - name: Upload build artifacts (backup)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ steps.version.outputs.version }}
+          path: release-assets/
+          if-no-files-found: warn
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          NOTES=release-notes.md
+          {
+            echo "## StratixOps Engine v${VERSION}"
+            echo
+            echo "Commit: \`$(git rev-parse --short HEAD)\`"
+            echo
+            if [ -f CHANGELOG.md ]; then
+              awk -v ver="$VERSION" '
+                $0 ~ "^## \\[" ver "\\]" { found = 1; next }
+                found && /^## \[/ { exit }
+                found { print }
+              ' CHANGELOG.md > section.md || true
+              if [ -s section.md ]; then cat section.md; fi
+            fi
+          } > "$NOTES"
+
+          PRERELEASE=""
+          case "$VERSION" in
+            *-rc.*|*-beta.*|*-alpha.*) PRERELEASE="--prerelease" ;;
+          esac
+
+          mapfile -t ASSETS < <(find release-assets -type f 2>/dev/null || true)
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "v${VERSION}" --notes-file "$NOTES" $PRERELEASE
+            if [ "${#ASSETS[@]}" -gt 0 ]; then
+              gh release upload "$TAG" "${ASSETS[@]}" --clobber
+            fi
+          else
+            gh release create "$TAG" --title "v${VERSION}" --notes-file "$NOTES" $PRERELEASE "${ASSETS[@]}"
+          fi
+
+          echo "::notice::Release v${VERSION} published for $TAG"

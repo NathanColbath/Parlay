@@ -1,0 +1,22 @@
+# Normalize line endings across platforms.
+* text=auto eol=lf
+
+# Gradle wrapper and scripts must keep LF.
+gradlew text eol=lf
+*.sh    text eol=lf
+*.bat   text eol=crlf
+*.ps1   text eol=crlf
+
+# Binary assets.
+*.jar   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ogg   binary
+*.wav   binary
+*.ttf   binary
+*.otf   binary
+
+# Build outputs are generated, not diffed.
+*.class binary

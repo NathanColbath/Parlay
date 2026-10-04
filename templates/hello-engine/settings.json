@@ -1,0 +1,13 @@
+{
+  "$comment": "Example window/audio settings (STR-14). Optional: EngineConfig.builder() has defaults for everything here.",
+  "window": {
+    "title": "Hello Engine",
+    "width": 1280,
+    "height": 720,
+    "resizable": true,
+    "vsync": true
+  },
+  "logicalViewport": { "width": 640, "height": 360 },
+  "audio": { "master": 0.8, "music": 0.8, "sfx": 1.0, "muted": false },
+  "showFps": false
+}

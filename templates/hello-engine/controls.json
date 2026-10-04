@@ -1,0 +1,10 @@
+{
+  "$comment": "Example action bindings (STR-14). Names are free-form; the engine resolves input.axis(\"Move\") from these. See docs/GETTING_STARTED.md step 6 (Bind actions).",
+  "actions": {
+    "Move":      { "keys": ["W", "A", "S", "D", "UP", "LEFT", "DOWN", "RIGHT"] },
+    "Confirm":   { "keys": ["SPACE", "ENTER"] },
+    "Pause":     { "keys": ["ESCAPE", "P"] },
+    "Mute":      { "keys": ["M"] },
+    "Retry":     { "keys": ["R"] }
+  }
+}
