@@ -16,6 +16,16 @@ public interface Audio {
     Music music(String path, float volume);
 
     /**
+     * Loads (or returns a cached) one-shot sound effect. Multiple effects may
+     * play at once; playback is voice-capped. If no audio device is available
+     * the returned handle is a no-op.
+     *
+     * @param path classpath or filesystem path, e.g. {@code sounds/pickup.wav}
+     * @return the effect handle
+     */
+    Sfx sfx(String path);
+
+    /**
      * Toggles mute for all output.
      */
     void toggleMute();

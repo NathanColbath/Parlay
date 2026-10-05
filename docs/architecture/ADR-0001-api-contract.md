@@ -1,10 +1,12 @@
 # ADR-0001: Public API contract for the engine MVP
 
-- Status: Accepted
+- Status: Accepted (amended in part by ADR-0002)
 - Date: 2026-10-04
 - Owner: Lead Engineer
 - Supersedes: open questions in `docs/design/02-api-ergonomics.md` (STR-3 draft)
 - Relates to: STR-13 (UX review B4, S1-S6, S11), STR-2 (spec & architecture)
+- Amendment: ADR-0002 adds `Audio.sfx`/`Sfx` and `Renderer.fillRect`; all other
+  decisions here remain in force.
 
 ## Context
 

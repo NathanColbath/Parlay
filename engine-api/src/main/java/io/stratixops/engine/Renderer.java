@@ -26,6 +26,19 @@ public interface Renderer {
     void draw(Sprite sprite, float x, float y);
 
     /**
+     * Fills a solid rectangle in the current coordinate space (world while a
+     * camera is pushed, otherwise screen space). Used for full-screen flashes,
+     * letterbox bars, and simple debug output.
+     *
+     * @param x    left edge in pixels
+     * @param y    top edge in pixels
+     * @param w    width in pixels
+     * @param h    height in pixels
+     * @param rgba packed color, e.g. {@code 0x1B1B2FFF}
+     */
+    void fillRect(float x, float y, float w, float h, int rgba);
+
+    /**
      * Draws text with the built-in font. The position is the top-left corner of
      * the first glyph.
      *
