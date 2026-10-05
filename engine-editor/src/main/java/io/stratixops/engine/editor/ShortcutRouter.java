@@ -43,16 +43,42 @@ public final class ShortcutRouter {
      * @return the action, or {@link Shortcut#NONE}
      */
     public static Shortcut resolve(Focus focus, boolean ctrl, boolean shift, Key key) {
+        return resolve(focus, ctrl, shift, false, key);
+    }
+
+    /**
+     * Resolves a chord to an editor action, including the Alt modifier used by
+     * the transport shortcuts ({@code Ctrl+P}, {@code Shift+P},
+     * {@code Ctrl+Alt+P}).
+     *
+     * @param focus the focused panel context (never {@code null})
+     * @param ctrl  whether Ctrl is held
+     * @param shift whether Shift is held
+     * @param alt   whether Alt is held
+     * @param key   the logical key, or {@code null}
+     * @return the action, or {@link Shortcut#NONE}
+     */
+    public static Shortcut resolve(Focus focus, boolean ctrl, boolean shift, boolean alt, Key key) {
         Objects.requireNonNull(focus, "focus");
         if (key == null) {
             return Shortcut.NONE;
         }
         // Global: the command palette is reachable even from a text field.
-        if (ctrl && shift && key == Key.P) {
+        if (ctrl && shift && !alt && key == Key.P) {
             return Shortcut.OPEN_COMMAND_PALETTE;
         }
         if (focus == Focus.TEXT) {
             return Shortcut.NONE;
+        }
+        // Transport: Ctrl+P play, Shift+P pause, Ctrl+Alt+P step.
+        if (ctrl && !shift && alt && key == Key.P) {
+            return Shortcut.STEP;
+        }
+        if (ctrl && !shift && !alt && key == Key.P) {
+            return Shortcut.PLAY;
+        }
+        if (!ctrl && shift && !alt && key == Key.P) {
+            return Shortcut.PAUSE;
         }
         if (ctrl && !shift && key == Key.Z) {
             return Shortcut.UNDO;

@@ -11,6 +11,8 @@ import io.stratixops.engine.editor.Shortcut;
 import io.stratixops.engine.editor.ShortcutRouter;
 import io.stratixops.engine.editor.command.EditCommands;
 import io.stratixops.engine.editor.console.LogLevel;
+import io.stratixops.engine.editor.play.TransportActions;
+import io.stratixops.engine.editor.view.ViewportRenderer;
 import io.stratixops.engine.scene.GameObject;
 
 import java.nio.file.Path;
@@ -29,34 +31,28 @@ public final class EditorUi {
     private final InspectorPanel inspector = new InspectorPanel();
     private final ProjectPanel project;
     private final ConsolePanel console = new ConsolePanel();
-    private final ViewPanel sceneView = new ViewPanel(PanelKind.SCENE);
-    private final ViewPanel gameView = new ViewPanel(PanelKind.GAME);
+    private final SceneViewPanel sceneView;
+    private final GameViewPanel gameView;
 
     /**
      * @param state        the headless editor state
      * @param themeProvider the resolved themes
      * @param layouts      the layout persistence store
+     * @param viewport     the runtime Game-view target, or {@code null} headless
      */
-    public EditorUi(EditorState state, ThemeProvider themeProvider, EditorLayoutStore layouts) {
+    public EditorUi(EditorState state, ThemeProvider themeProvider, EditorLayoutStore layouts,
+                    ViewportRenderer viewport) {
         this.ctx = new EditorContext(state, themeProvider, layouts);
         Path root = state.projectRoot();
         this.project = new ProjectPanel(root != null ? root : Path.of("."));
+        this.sceneView = new SceneViewPanel(state.registry());
+        this.gameView = new GameViewPanel(viewport);
         ctx.onRequestDockRebuild = dockspace::requestRebuild;
     }
 
     /** @return the shared editor context, for host callbacks. */
     public EditorContext context() {
         return ctx;
-    }
-
-    /** @return the scene view panel, so the host can present a RenderTarget. */
-    ViewPanel sceneView() {
-        return sceneView;
-    }
-
-    /** @return the game view panel, so the host can present the runtime target. */
-    ViewPanel gameView() {
-        return gameView;
     }
 
     /** Renders one full editor frame. Call between ImGui {@code newFrame}/{@code render}. */
@@ -104,7 +100,8 @@ public final class EditorUi {
             return;
         }
         Focus focus = io.getWantTextInput() ? Focus.TEXT : Focus.of(ctx.focusedPanel);
-        Shortcut shortcut = ShortcutRouter.resolve(focus, io.getKeyCtrl(), io.getKeyShift(), key);
+        Shortcut shortcut = ShortcutRouter.resolve(focus, io.getKeyCtrl(), io.getKeyShift(),
+                io.getKeyAlt(), key);
         run(shortcut);
     }
 
@@ -131,6 +128,9 @@ public final class EditorUi {
             }
             case RENAME -> hierarchy.beginRename(ctx, state.selection().primary());
             case SELECT_ALL_PANEL -> selectAll();
+            case PLAY -> play();
+            case PAUSE -> pause();
+            case STEP -> step();
             case PLAY_TOGGLE -> togglePlay();
             case ACTIVATE -> {
                 GameObject primary = state.selection().primary();
@@ -158,13 +158,29 @@ public final class EditorUi {
 
     private void togglePlay() {
         EditorState state = ctx.state;
-        if (state.play().isStopped()) {
-            state.play().play(state.scene(), state.registry());
-        } else if (state.play().isPlaying()) {
-            state.play().pause();
-        } else {
-            state.play().resume();
+        boolean wasStopped = state.play().isStopped();
+        TransportActions.toggle(state);
+        if (wasStopped) {
+            ctx.log(LogLevel.INFO, "Entered Play mode");
         }
+    }
+
+    private void play() {
+        if (ctx.state.play().isStopped()) {
+            ctx.log(LogLevel.INFO, "Entered Play mode");
+        }
+        TransportActions.play(ctx.state);
+    }
+
+    private void pause() {
+        if (ctx.state.play().isPlaying()) {
+            TransportActions.pause(ctx.state);
+            ctx.log(LogLevel.INFO, "Paused");
+        }
+    }
+
+    private void step() {
+        TransportActions.step(ctx.state);
     }
 
     private static ShortcutRouter.Key pressedKey() {

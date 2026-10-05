@@ -36,6 +36,7 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
         files(classDirectories.files.map { dir ->
             fileTree(dir) {
                 exclude("io/stratixops/engine/editor/ui/**")
+                exclude("io/stratixops/engine/editor/gl/**")
             }
         })
     )

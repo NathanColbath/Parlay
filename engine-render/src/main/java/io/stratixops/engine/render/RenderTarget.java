@@ -3,6 +3,10 @@ package io.stratixops.engine.render;
 import io.stratixops.engine.Camera2D;
 import io.stratixops.engine.Renderer;
 import io.stratixops.engine.Sprite;
+import java.nio.ByteBuffer;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
+import org.lwjgl.system.MemoryStack;
 
 /**
  * An offscreen color surface the editor (and any non-window consumer) renders
@@ -84,6 +88,39 @@ public final class RenderTarget implements Renderer, AutoCloseable {
     /** @return target height in logical pixels */
     public int height() {
         return framebuffer.height();
+    }
+
+    /**
+     * Reads one RGBA texel back from the target's framebuffer, for tests and
+     * tooling (pixel readback). The target must not be active; it is read while
+     * unbound and the previously bound framebuffer is restored.
+     *
+     * @param x column, {@code 0..width-1}, origin bottom-left
+     * @param y row, {@code 0..height-1}, origin bottom-left
+     * @return the four bytes as {@code {r, g, b, a}} in {@code 0..255}
+     * @throws IllegalStateException if the target is closed
+     */
+    public int[] readPixel(int x, int y) {
+        if (closed) {
+            throw new IllegalStateException("RenderTarget is closed");
+        }
+        if (active) {
+            end();
+        }
+        int previous = GL11.glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
+        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, framebuffer.framebufferId());
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            ByteBuffer buffer = stack.malloc(4);
+            GL11.glReadPixels(x, y, 1, 1, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
+            return new int[] {
+                buffer.get(0) & 0xFF,
+                buffer.get(1) & 0xFF,
+                buffer.get(2) & 0xFF,
+                buffer.get(3) & 0xFF,
+            };
+        } finally {
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, previous);
+        }
     }
 
     GlFramebuffer framebuffer() {

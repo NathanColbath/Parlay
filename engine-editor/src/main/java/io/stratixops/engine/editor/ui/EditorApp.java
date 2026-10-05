@@ -2,9 +2,14 @@ package io.stratixops.engine.editor.ui;
 
 import io.stratixops.engine.editor.DockLayout;
 import io.stratixops.engine.editor.EditorState;
+import io.stratixops.engine.editor.gl.GlViewportRenderer;
+import io.stratixops.engine.editor.view.ViewportRenderer;
 import io.stratixops.engine.imgui.glue.ImGuiLayer;
+import io.stratixops.engine.render.DesktopAssets;
+import io.stratixops.engine.render.GlRenderer;
 import io.stratixops.engine.render.WindowContext;
 import io.stratixops.engine.render.platform.GlfwWindow;
+import io.stratixops.engine.scene.Scene;
 import io.stratixops.engine.serialize.SceneIO;
 
 import java.io.IOException;
@@ -29,6 +34,7 @@ public final class EditorApp implements AutoCloseable {
     private final ThemeProvider themes = new ThemeProvider();
     private final EditorLayoutStore layouts;
     private final WindowContext window;
+    private final ViewportRenderer viewport;
     private final ImGuiLayer layer = new ImGuiLayer();
     private final EditorUi ui;
     private boolean running;
@@ -39,10 +45,22 @@ public final class EditorApp implements AutoCloseable {
      * @param layoutFile where to persist the docking layout, or {@code null}
      */
     public EditorApp(EditorState state, WindowContext window, Path layoutFile) {
+        this(state, window, layoutFile, null);
+    }
+
+    /**
+     * @param state      the headless editor state
+     * @param window     the shared window/context
+     * @param layoutFile where to persist the docking layout, or {@code null}
+     * @param viewport   the runtime Game-view target, or {@code null} headless
+     */
+    public EditorApp(EditorState state, WindowContext window, Path layoutFile,
+                     ViewportRenderer viewport) {
         this.state = state;
         this.window = window;
+        this.viewport = viewport;
         this.layouts = new EditorLayoutStore(layoutFile);
-        this.ui = new EditorUi(state, themes, layouts);
+        this.ui = new EditorUi(state, themes, layouts, viewport);
         state.setLayout(layouts.load(state.layout()));
     }
 
@@ -59,12 +77,23 @@ public final class EditorApp implements AutoCloseable {
         while (running && !window.shouldClose()) {
             window.pollEvents();
             state.play().update(FIXED_FRAME_SECONDS);
+            renderRuntime();
             layer.newFrame();
             ui.render();
             layer.render();
             window.swapBuffers();
         }
         close();
+    }
+
+    private void renderRuntime() {
+        if (viewport == null) {
+            return;
+        }
+        Scene runtime = state.play().runtimeScene();
+        if (runtime != null) {
+            viewport.renderRuntime(runtime);
+        }
     }
 
     /** Requests a clean shutdown at the end of the current frame. */
@@ -112,7 +141,11 @@ public final class EditorApp implements AutoCloseable {
         state.setProjectRoot(root);
         Path layoutFile = root.resolve(".stratixops").resolve("editor-layout.txt");
         try (GlfwWindow window = new GlfwWindow("StratixOps Editor", 1280, 800, true, true);
-                EditorApp app = new EditorApp(state, window, layoutFile)) {
+                DesktopAssets assets = new DesktopAssets();
+                GlRenderer renderer = new GlRenderer(assets,
+                        GlViewportRenderer.LOGICAL_WIDTH, GlViewportRenderer.LOGICAL_HEIGHT);
+                GlViewportRenderer viewport = new GlViewportRenderer(renderer);
+                EditorApp app = new EditorApp(state, window, layoutFile, viewport)) {
             app.run();
         }
     }

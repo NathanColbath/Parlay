@@ -31,5 +31,11 @@ public enum Shortcut {
     /** Ctrl+Shift+P: open the command palette from anywhere. */
     OPEN_COMMAND_PALETTE,
     /** Space: toggle Play/Pause. */
-    PLAY_TOGGLE
+    PLAY_TOGGLE,
+    /** Ctrl+P: enter Play (or resume from Pause). */
+    PLAY,
+    /** Shift+P: pause the running Play mode. */
+    PAUSE,
+    /** Ctrl+Alt+P: advance exactly one fixed tick while paused. */
+    STEP
 }
