@@ -103,6 +103,18 @@ public final class Rgba {
         return (digit(h, index) << 4) | digit(h, index + 1);
     }
 
+    /**
+     * Returns a copy of the color with its alpha channel replaced.
+     *
+     * @param color packed {@code 0xRRGGBBAA}
+     * @param alpha 0..1 opacity
+     * @return packed color with the new alpha
+     */
+    public static int withAlpha(int color, float alpha) {
+        int a = Math.round(Math.max(0f, Math.min(1f, alpha)) * 255f);
+        return (color & 0xFFFFFF00) | (a & 0xFF);
+    }
+
     /** Converts a packed color to ImGui's normalized RGBA float order. */
     public static float[] toFloats(int color) {
         return new float[] {

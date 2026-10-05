@@ -9,7 +9,14 @@ import imgui.type.ImInt;
 import imgui.type.ImString;
 import io.stratixops.engine.imgui.theme.Icon;
 import io.stratixops.engine.imgui.theme.Theme;
+import io.stratixops.engine.imgui.widget.AssetBrowser;
+import io.stratixops.engine.imgui.widget.AssetItem;
+import io.stratixops.engine.imgui.widget.AssetKind;
+import io.stratixops.engine.imgui.widget.AssetStatus;
+import io.stratixops.engine.imgui.widget.Breadcrumb;
 import io.stratixops.engine.imgui.widget.CommandPalette;
+import io.stratixops.engine.imgui.widget.ContextMenu;
+import io.stratixops.engine.imgui.widget.CreateMenu;
 import io.stratixops.engine.imgui.widget.PropertyRow;
 import io.stratixops.engine.imgui.widget.Toast;
 import io.stratixops.engine.imgui.widget.TreeRow;
@@ -40,6 +47,56 @@ public final class DemoWindow {
             "Toggle Inspector",
             "\u0000GameObject",
             "Create Empty");
+    private static final CreateMenu.State CREATE_MENU = new CreateMenu.State();
+    private static final List<CreateMenu.Item> CREATE_ITEMS = List.of(
+            CreateMenu.Item.quick("empty", "Create Empty", Icon.ADD),
+            CreateMenu.Item.quick("empty-child", "Create Empty Child", Icon.CREATE_CHILD),
+            CreateMenu.Item.of("sprite", "Sprite Renderer", "Rendering", Icon.SPRITE_RENDERER),
+            CreateMenu.Item.of("camera", "Camera", "Rendering", Icon.CAMERA),
+            CreateMenu.Item.of("animator", "Animator", "Animation", Icon.ANIMATOR),
+            CreateMenu.Item.of("collider", "Box Collider 2D", "Physics", Icon.COLLIDER_2D),
+            CreateMenu.Item.of("audio", "AudioSource", "Audio", Icon.AUDIO_SOURCE),
+            CreateMenu.Item.of("behaviour", "MonoBehaviour", "Scripts", Icon.BEHAVIOUR));
+    private static final ContextMenu.State CONTEXT_MENU = new ContextMenu.State();
+    private static final List<ContextMenu.Entry> CONTEXT_ITEMS = List.of(
+            ContextMenu.Entry.item("duplicate", "Duplicate", Icon.DUPLICATE, "Ctrl+D"),
+            ContextMenu.Entry.item("rename", "Rename", Icon.RENAME, "F2"),
+            ContextMenu.Entry.submenu("add", "Add Component", Icon.ADD, List.of(
+                    ContextMenu.Entry.item("sprite", "Sprite Renderer", Icon.SPRITE_RENDERER),
+                    ContextMenu.Entry.item("animator", "Animator", Icon.ANIMATOR),
+                    ContextMenu.Entry.separator(),
+                    ContextMenu.Entry.item("audio", "AudioSource", Icon.AUDIO_SOURCE))),
+            ContextMenu.Entry.separator(),
+            ContextMenu.Entry.checkable("gizmos", "Show gizmos", Icon.SNAP, true),
+            ContextMenu.Entry.radio("move", "Move tool", Icon.GIZMO_MOVE, true),
+            ContextMenu.Entry.radio("rotate", "Rotate tool", Icon.GIZMO_ROTATE, false),
+            ContextMenu.Entry.disabled("delete", "Delete", Icon.DELETE, "Locked by prefab"));
+
+    static {
+        CREATE_MENU.recents.add("camera");
+    }
+
+    private static final AssetBrowser ASSET_BROWSER = new AssetBrowser();
+    private static final List<Breadcrumb.Segment> ASSET_PATH = List.of(
+            new Breadcrumb.Segment("Project", ""),
+            new Breadcrumb.Segment("assets", "assets"),
+            new Breadcrumb.Segment("sprites", "assets/sprites"));
+    private static final List<AssetItem> ASSET_ITEMS = List.of(
+            AssetItem.folder("assets/sprites/characters", "characters"),
+            new AssetItem("assets/sprites/player.png", "player_idle.png", AssetKind.IMAGE,
+                    24_576L, 1_752_000_000L, AssetStatus.READY),
+            new AssetItem("assets/sprites/enemy.png", "enemy_run.png", AssetKind.IMAGE,
+                    18_432L, 1_751_900_000L, AssetStatus.READY),
+            new AssetItem("assets/sprites/gem.png", "gem.png", AssetKind.IMAGE,
+                    4_096L, 1_751_800_000L, AssetStatus.MISSING),
+            new AssetItem("assets/sprites/portal.png", "portal.png", AssetKind.IMAGE,
+                    0L, 0L, AssetStatus.UNIMPORTED),
+            AssetItem.of("assets/scenes/gem-dash.scene", "gem-dash.scene", AssetKind.SCENE),
+            AssetItem.of("assets/prefabs/spikebot.prefab", "spikebot.prefab", AssetKind.PREFAB),
+            AssetItem.of("assets/scripts/PlayerController.java", "PlayerController.java",
+                    AssetKind.SCRIPT),
+            AssetItem.of("assets/audio/theme.ogg", "theme.ogg", AssetKind.AUDIO),
+            AssetItem.of("assets/fonts/pixel.ttf", "pixel.ttf", AssetKind.FONT));
 
     private DemoWindow() {
     }
@@ -57,10 +114,22 @@ public final class DemoWindow {
             swatches(t);
             hierarchySection(t);
             inspectorSection(t);
+            assetSection(t);
         }
         ImGui.end();
 
+        // The create and context menus are popup surfaces; the gallery pins them
+        // open at fixed anchors so both render at every theme and DPI scale.
+        CREATE_MENU.open = true;
+        CREATE_MENU.anchorX = 40f;
+        CREATE_MENU.anchorY = 72f;
+        CONTEXT_MENU.open = true;
+        CONTEXT_MENU.x = ImGui.getIO().getDisplaySizeX() - 420f;
+        CONTEXT_MENU.y = 160f;
+
         CommandPalette.render(t, PALETTE_QUERY, PALETTE_RESULTS, PALETTE_SELECTION);
+        CreateMenu.render(t, CREATE_MENU, CREATE_ITEMS);
+        ContextMenu.render(t, CONTEXT_MENU, CONTEXT_ITEMS);
         Toast.render(t, List.of(
                 new Toast.Message("Scene saved", "gem-dash.scene", Toast.Variant.SUCCESS),
                 new Toast.Message("Missing asset", "player.png is not imported", Toast.Variant.ERROR),
@@ -114,5 +183,11 @@ public final class DemoWindow {
         PropertyRow.colorField(t, "Tint", COLOR_VALUE);
         PropertyRow.readonly(t, "Guid", "8f2c\u2026a19d");
         ImGui.popID();
+    }
+
+    private static void assetSection(Theme t) {
+        PropertyRow.section(t, "Project \u2014 asset browser", true);
+        ASSET_BROWSER.render(t, ASSET_ITEMS, ASSET_PATH, ASSET_PATH.size() - 1);
+        ImGui.spacing();
     }
 }

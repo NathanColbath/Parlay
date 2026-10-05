@@ -36,6 +36,9 @@ public final class CommandPalette {
      */
     public static int render(Theme t, ImString query, List<String> results, ImInt selected) {
         ImGuiIO io = ImGui.getIO();
+        // Scrim persists under reduce-motion; only the transition would snap
+        // (G&TD W4). There is no animated open yet, so this is unconditional.
+        Ui.scrim(t.color.BG_OVERLAY);
         float width = t.size.SIZE_PALETTE_W;
         ImGui.setNextWindowPos((io.getDisplaySizeX() - width) * 0.5f, io.getDisplaySizeY() * 0.12f,
                 ImGuiCond.Always);

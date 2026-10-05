@@ -5,6 +5,7 @@ import imgui.flag.ImGuiCol;
 import imgui.type.ImBoolean;
 import imgui.type.ImInt;
 import imgui.type.ImString;
+import io.stratixops.engine.imgui.theme.Icon;
 import io.stratixops.engine.imgui.theme.Theme;
 import imgui.type.ImFloat;
 
@@ -125,7 +126,8 @@ public final class PropertyRow {
     /** A section header ({@code type.mdMedium}) with an optional collapse chevron. */
     public static boolean section(Theme t, String title, boolean expanded) {
         Ui.pushColor(ImGuiCol.Text, t.color.TEXT_PRIMARY);
-        ImGui.text("\u25be " + title);
+        char chevron = (char) (expanded ? Icon.CHEVRON_DOWN : Icon.CHEVRON_RIGHT).codepoint();
+        ImGui.text(chevron + " " + title);
         Ui.popColor();
         boolean clicked = ImGui.isItemClicked();
         return clicked;
