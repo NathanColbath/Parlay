@@ -5,7 +5,7 @@
 - Issue: STR-2
 - Date: 2026-10-05
 - Supersedes: n/a (first architecture spec); amends `ADR-0001` for two additive API items (see ADR-0002)
-- Related: `docs/design/01-engine-features.md` (capability contract), `docs/design/02-api-ergonomics.md` (ergonomics contract), `docs/qa/quality-gate.md`, `docs/devops/*`, `ADR-0001`–`ADR-0004`, and (forward-looking, editor track) `ADR-0005`
+- Related: `docs/design/01-engine-features.md` (capability contract), `docs/design/02-api-ergonomics.md` (ergonomics contract), `docs/qa/quality-gate.md`, `docs/devops/*`, `ADR-0001`–`ADR-0004`, and (additive editor track, STR-19) `ADR-0005`–`ADR-0008` + `02-editor-architecture.md`
 
 This is the single source of truth for the engine's structure, public surface,
 backend choice, runtime model, and build layout for the MVP. Exact method
@@ -389,10 +389,13 @@ and acceptance criteria. In short:
 
 ADRs: [ADR-0002 rendering backend](ADR-0002-rendering-backend.md) ·
 [ADR-0003 loop & threading](ADR-0003-game-loop-and-threading.md) ·
-[ADR-0004 modules & runtime wiring](ADR-0004-modules-and-runtime-wiring.md) ·
-[ADR-0005 editor backend recommendation](ADR-0005-editor-backend-recommendation.md).
+[ADR-0004 modules & runtime wiring](ADR-0004-modules-and-runtime-wiring.md).
 
-> Forward-looking (pending board approval): [ADR-0005](ADR-0005-editor-backend-recommendation.md)
-> records the Lead Engineer's backend recommendation for the Unity-parity + ImGui
-> editor track requested on STR-18. It does **not** change the MVP scope above;
-> the formal editor ADRs are owned by STR-19.
+> Editor track (additive, board-approved on STR-18): [ADR-0005 editor &
+> rendering backend](ADR-0005-editor-and-rendering-backend.md) ·
+> [ADR-0006 serialization](ADR-0006-scene-serialization-format.md) ·
+> [ADR-0007 Behaviour/Inspector](ADR-0007-behaviour-binding-and-inspector.md) ·
+> [ADR-0008 editor module boundaries](ADR-0008-editor-module-boundaries.md);
+> architecture and Phase 1 breakdown in
+> [02-editor-architecture.md](02-editor-architecture.md). These do **not** change
+> the MVP scope above; they freeze the layered editor track (owned by STR-19).

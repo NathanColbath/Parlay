@@ -149,3 +149,11 @@ STR-2 (this spec)
 All P0 features build and run on desktop; the sample is playable end to end;
 `./gradlew check` is green with the coverage floor met; `git clean -xdf` reproduces
 it; the getting-started path works; the public API is documented and reviewed.
+
+---
+
+> **Editor track (Phase 1):** the additive Unity-parity + ImGui editor is broken
+> down separately in [`02-editor-architecture.md`](02-editor-architecture.md),
+> with its module boundaries in
+> [ADR-0008](ADR-0008-editor-module-boundaries.md). It does not change the MVP
+> tasks above.
