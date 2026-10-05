@@ -7,6 +7,7 @@ import io.stratixops.engine.editor.inspect.InspectorModel;
 import io.stratixops.engine.editor.play.PlayController;
 import io.stratixops.engine.inspect.ComponentRegistry;
 import io.stratixops.engine.scene.Scene;
+import io.stratixops.engine.serialize.SceneIO;
 
 import java.nio.file.Path;
 import java.util.Objects;
@@ -21,6 +22,7 @@ public final class EditorState {
 
     private final ComponentRegistry registry;
     private final InspectorModel inspector;
+    private final SceneIO sceneIO;
     private final Selection selection = new Selection();
     private final CommandStack commands = new CommandStack();
     private final PlayController play = new PlayController();
@@ -36,6 +38,7 @@ public final class EditorState {
     public EditorState(ComponentRegistry registry) {
         this.registry = Objects.requireNonNull(registry, "registry");
         this.inspector = new InspectorModel(registry);
+        this.sceneIO = new SceneIO(registry);
         this.scene = new Scene("Untitled");
     }
 
@@ -115,6 +118,47 @@ public final class EditorState {
         selection.clear();
         commands.clear();
         dirty = false;
+    }
+
+    /**
+     * @return the scene serializer bound to this editor's registry
+     */
+    public SceneIO sceneIO() {
+        return sceneIO;
+    }
+
+    /**
+     * Replaces the document with a fresh empty scene.
+     *
+     * @param name the scene name
+     * @return the new scene
+     */
+    public Scene newScene(String name) {
+        Scene fresh = new Scene(name);
+        openScene(fresh);
+        return fresh;
+    }
+
+    /**
+     * Loads a scene from disk as a fresh document.
+     *
+     * @param path the scene file
+     * @return the loaded scene
+     */
+    public Scene openScene(Path path) {
+        Scene loaded = sceneIO.load(path);
+        openScene(loaded);
+        return loaded;
+    }
+
+    /**
+     * Saves the current scene and clears the dirty flag.
+     *
+     * @param path the destination
+     */
+    public void saveScene(Path path) {
+        sceneIO.save(scene, path);
+        markClean();
     }
 
     /**
