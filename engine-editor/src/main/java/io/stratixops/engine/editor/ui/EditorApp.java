@@ -70,6 +70,7 @@ public final class EditorApp implements AutoCloseable {
         ui.context().onQuit = this::requestStop;
         ui.context().onThemeChanged = () -> layer.setTheme(ui.context().theme());
         ui.context().onSaveScene = this::saveScene;
+        ui.context().onOpenScene = this::openScene;
         state.console().info("StratixOps editor started (layout "
                 + (layouts.file() == null ? "disabled" : "persisted") + ")");
 
@@ -121,6 +122,25 @@ public final class EditorApp implements AutoCloseable {
             state.console().info("Saved " + file);
         } catch (IOException | RuntimeException e) {
             state.console().error("Could not save " + file, e);
+        }
+    }
+
+    private void openScene() {
+        Path root = state.projectRoot();
+        if (root == null) {
+            state.console().warn("No project root set; scene was not opened");
+            return;
+        }
+        Path file = root.resolve("scenes").resolve(state.scene().name() + ".scene");
+        if (!Files.exists(file)) {
+            state.console().warn("No saved scene at " + file);
+            return;
+        }
+        try {
+            state.openScene(file);
+            state.console().info("Opened " + file);
+        } catch (RuntimeException e) {
+            state.console().error("Could not open " + file, e);
         }
     }
 

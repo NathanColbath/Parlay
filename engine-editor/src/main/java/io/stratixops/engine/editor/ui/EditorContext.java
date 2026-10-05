@@ -1,5 +1,6 @@
 package io.stratixops.engine.editor.ui;
 
+import io.stratixops.engine.editor.EditorController;
 import io.stratixops.engine.editor.EditorState;
 import io.stratixops.engine.editor.PanelKind;
 import io.stratixops.engine.editor.command.Command;
@@ -16,6 +17,7 @@ import io.stratixops.engine.imgui.theme.Theme;
 public final class EditorContext {
 
     final EditorState state;
+    final EditorController controller;
     final ThemeProvider themes;
     final EditorLayoutStore layouts;
     final DragAndDrop drag = new DragAndDrop();
@@ -29,6 +31,9 @@ public final class EditorContext {
     /** Host hook: save the open scene. */
     Runnable onSaveScene = () -> {
     };
+    /** Host hook: open (reload from disk) the open scene. */
+    Runnable onOpenScene = () -> {
+    };
     /** Host hook: request application shutdown. */
     Runnable onQuit = () -> {
     };
@@ -41,6 +46,7 @@ public final class EditorContext {
 
     EditorContext(EditorState state, ThemeProvider themes, EditorLayoutStore layouts) {
         this.state = state;
+        this.controller = new EditorController(state);
         this.themes = themes;
         this.layouts = layouts;
         this.palette = new CommandPaletteController(this);

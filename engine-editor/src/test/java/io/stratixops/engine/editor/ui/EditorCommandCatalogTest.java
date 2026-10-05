@@ -27,9 +27,24 @@ class EditorCommandCatalogTest {
 
         assertThat(commands).extracting(PaletteCommand::id)
                 .contains("go.create", "go.duplicate", "go.delete",
-                        "edit.undo", "edit.redo", "file.save",
+                        "go.copy", "go.paste",
+                        "edit.undo", "edit.redo", "file.open", "file.save",
                         "view.reset-layout", "view.theme",
                         "play.play", "play.stop");
+    }
+
+    @Test
+    void copyThenPastePaletteEntriesAreUndoable() {
+        EditorContext ctx = context();
+        command(ctx, "go.create").action().run();
+        command(ctx, "go.copy").action().run();
+        ctx.state.selection().clear();
+        command(ctx, "go.paste").action().run();
+
+        assertThat(ctx.state.scene().gameObjects()).hasSize(2);
+
+        ctx.state.undo();
+        assertThat(ctx.state.scene().gameObjects()).hasSize(1);
     }
 
     @Test

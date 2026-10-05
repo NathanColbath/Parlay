@@ -26,6 +26,12 @@ public enum Shortcut {
     REDO,
     /** Ctrl+S: save the open scene. */
     SAVE,
+    /** Ctrl+O: open (reload from disk) the open scene. */
+    OPEN,
+    /** Ctrl+C: copy the primary selection to the clipboard. */
+    COPY,
+    /** Ctrl+V: paste the clipboard under the primary selection (or at root). */
+    PASTE,
     /** Ctrl+A outside a text field: select every item in the focused panel. */
     SELECT_ALL_PANEL,
     /** Ctrl+Shift+P: open the command palette from anywhere. */

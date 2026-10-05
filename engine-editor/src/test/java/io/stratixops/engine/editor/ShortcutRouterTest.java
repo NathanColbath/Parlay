@@ -16,6 +16,22 @@ class ShortcutRouterTest {
                 .isEqualTo(Shortcut.NONE);
         assertThat(ShortcutRouter.resolve(Focus.TEXT, true, false, ShortcutRouter.Key.A))
                 .isEqualTo(Shortcut.NONE);
+        assertThat(ShortcutRouter.resolve(Focus.TEXT, true, false, ShortcutRouter.Key.C))
+                .isEqualTo(Shortcut.NONE);
+        assertThat(ShortcutRouter.resolve(Focus.TEXT, true, false, ShortcutRouter.Key.V))
+                .isEqualTo(Shortcut.NONE);
+        assertThat(ShortcutRouter.resolve(Focus.TEXT, true, false, ShortcutRouter.Key.O))
+                .isEqualTo(Shortcut.NONE);
+    }
+
+    @Test
+    void copyPasteAndOpenChords() {
+        assertThat(ShortcutRouter.resolve(Focus.HIERARCHY, true, false, ShortcutRouter.Key.C))
+                .isEqualTo(Shortcut.COPY);
+        assertThat(ShortcutRouter.resolve(Focus.HIERARCHY, true, false, ShortcutRouter.Key.V))
+                .isEqualTo(Shortcut.PASTE);
+        assertThat(ShortcutRouter.resolve(Focus.SCENE, true, false, ShortcutRouter.Key.O))
+                .isEqualTo(Shortcut.OPEN);
     }
 
     @Test
@@ -73,5 +89,7 @@ class ShortcutRouterTest {
         assertThat(ShortcutRouter.isSelectionAction(Shortcut.RENAME, Focus.HIERARCHY)).isTrue();
         assertThat(ShortcutRouter.isSelectionAction(Shortcut.RENAME, Focus.CONSOLE)).isFalse();
         assertThat(ShortcutRouter.isSelectionAction(Shortcut.UNDO, Focus.HIERARCHY)).isFalse();
+        assertThat(ShortcutRouter.isSelectionAction(Shortcut.COPY, Focus.HIERARCHY)).isTrue();
+        assertThat(ShortcutRouter.isSelectionAction(Shortcut.PASTE, Focus.INSPECTOR)).isTrue();
     }
 }

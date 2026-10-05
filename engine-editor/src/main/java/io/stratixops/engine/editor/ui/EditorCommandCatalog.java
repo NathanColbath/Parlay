@@ -2,10 +2,7 @@ package io.stratixops.engine.editor.ui;
 
 import io.stratixops.engine.editor.DockLayout;
 import io.stratixops.engine.editor.PanelKind;
-import io.stratixops.engine.editor.command.EditCommands;
 import io.stratixops.engine.scene.GameObject;
-import io.stratixops.engine.scene.Guid;
-import io.stratixops.engine.scene.Scene;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -14,8 +11,8 @@ import java.util.Map;
 
 /**
  * Builds the command palette catalogue from the live editor state (STR-40).
- * Every mutating entry routes through {@code EditCommands}, so palette actions
- * are undoable exactly like the panel and menu equivalents.
+ * Every mutating entry routes through the {@code EditorController}, so palette
+ * actions are undoable exactly like the panel and menu equivalents.
  */
 final class EditorCommandCatalog {
 
@@ -39,16 +36,13 @@ final class EditorCommandCatalog {
         list.add(new PaletteCommand("go.create-child", "Create Child GameObject", "GameObject",
                 primary != null, () -> create(ctx, primary)));
         list.add(new PaletteCommand("go.duplicate", "Duplicate Selection", "GameObject",
-                primary != null, () -> {
-                    ctx.execute(EditCommands.duplicate(ctx.state.scene(), primary,
-                            ctx.state.registry()));
-                }));
+                primary != null, () -> ctx.controller.duplicateSelection()));
         list.add(new PaletteCommand("go.delete", "Delete Selection", "GameObject",
-                !ctx.state.selection().isEmpty(), () -> {
-                    ctx.execute(EditCommands.delete(ctx.state.scene(),
-                            ctx.state.selection().objects()));
-                    ctx.state.selection().clear();
-                }));
+                !ctx.state.selection().isEmpty(), () -> ctx.controller.deleteSelection()));
+        list.add(new PaletteCommand("go.copy", "Copy Selection", "GameObject",
+                !ctx.state.selection().isEmpty(), () -> ctx.controller.copySelection()));
+        list.add(new PaletteCommand("go.paste", "Paste", "GameObject",
+                !ctx.controller.clipboardEmpty(), () -> ctx.controller.paste()));
         return list;
     }
 
@@ -58,6 +52,8 @@ final class EditorCommandCatalog {
                 () -> ctx.state.undo()));
         list.add(new PaletteCommand("edit.redo", "Redo", "Edit", ctx.state.commands().canRedo(),
                 () -> ctx.state.redo()));
+        list.add(new PaletteCommand("file.open", "Open Scene", "File", true,
+                () -> ctx.onOpenScene.run()));
         list.add(new PaletteCommand("file.save", "Save Scene", "File", true,
                 () -> ctx.onSaveScene.run()));
         return list;
@@ -111,14 +107,15 @@ final class EditorCommandCatalog {
     }
 
     static void create(EditorContext ctx, GameObject parent) {
-        ctx.state.selection().select(createObject(ctx, parent));
+        createObject(ctx, parent);
     }
 
     static GameObject createObject(EditorContext ctx, GameObject parent) {
-        Scene scene = ctx.state.scene();
-        GameObject object = new GameObject(Guid.random(), "GameObject");
-        ctx.execute(EditCommands.create(scene, object, parent));
-        return object;
+        if (parent == null) {
+            return ctx.controller.createGameObject("GameObject");
+        }
+        ctx.state.selection().select(parent);
+        return ctx.controller.createChild("GameObject");
     }
 
     /**

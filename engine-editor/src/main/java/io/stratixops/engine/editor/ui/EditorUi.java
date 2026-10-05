@@ -9,7 +9,6 @@ import io.stratixops.engine.editor.Focus;
 import io.stratixops.engine.editor.PanelKind;
 import io.stratixops.engine.editor.Shortcut;
 import io.stratixops.engine.editor.ShortcutRouter;
-import io.stratixops.engine.editor.command.EditCommands;
 import io.stratixops.engine.editor.console.LogLevel;
 import io.stratixops.engine.editor.play.TransportActions;
 import io.stratixops.engine.editor.view.ViewportRenderer;
@@ -114,18 +113,11 @@ public final class EditorUi {
             case UNDO -> state.undo();
             case REDO -> state.redo();
             case SAVE -> ctx.onSaveScene.run();
-            case DELETE -> {
-                if (!state.selection().isEmpty()) {
-                    ctx.execute(EditCommands.delete(state.scene(), state.selection().objects()));
-                    state.selection().clear();
-                }
-            }
-            case DUPLICATE -> {
-                GameObject primary = state.selection().primary();
-                if (primary != null) {
-                    ctx.execute(EditCommands.duplicate(state.scene(), primary, state.registry()));
-                }
-            }
+            case OPEN -> ctx.onOpenScene.run();
+            case COPY -> copy();
+            case PASTE -> paste();
+            case DELETE -> ctx.controller.deleteSelection();
+            case DUPLICATE -> ctx.controller.duplicateSelection();
             case RENAME -> hierarchy.beginRename(ctx, state.selection().primary());
             case SELECT_ALL_PANEL -> selectAll();
             case PLAY -> play();
@@ -183,6 +175,23 @@ public final class EditorUi {
         TransportActions.step(ctx.state);
     }
 
+    private void copy() {
+        if (ctx.state.selection().isEmpty()) {
+            return;
+        }
+        int count = ctx.controller.copySelection();
+        ctx.log(LogLevel.INFO, "Copied " + count + (count == 1 ? " object" : " objects"));
+    }
+
+    private void paste() {
+        int count = ctx.controller.clipboardSize();
+        if (count == 0) {
+            return;
+        }
+        ctx.controller.paste();
+        ctx.log(LogLevel.INFO, "Pasted " + count + (count == 1 ? " object" : " objects"));
+    }
+
     private static ShortcutRouter.Key pressedKey() {
         if (ImGui.isKeyPressed(ImGuiKey.Enter)) {
             return ShortcutRouter.Key.ENTER;
@@ -196,8 +205,17 @@ public final class EditorUi {
         if (ImGui.isKeyPressed(ImGuiKey.A)) {
             return ShortcutRouter.Key.A;
         }
+        if (ImGui.isKeyPressed(ImGuiKey.C)) {
+            return ShortcutRouter.Key.C;
+        }
         if (ImGui.isKeyPressed(ImGuiKey.D)) {
             return ShortcutRouter.Key.D;
+        }
+        if (ImGui.isKeyPressed(ImGuiKey.O)) {
+            return ShortcutRouter.Key.O;
+        }
+        if (ImGui.isKeyPressed(ImGuiKey.V)) {
+            return ShortcutRouter.Key.V;
         }
         if (ImGui.isKeyPressed(ImGuiKey.Z)) {
             return ShortcutRouter.Key.Z;

@@ -22,10 +22,13 @@ public final class ShortcutRouter {
         F2,
         DELETE,
         A,
+        C,
         D,
-        Z,
-        Y,
+        O,
         S,
+        V,
+        Y,
+        Z,
         P,
         SPACE
     }
@@ -92,6 +95,15 @@ public final class ShortcutRouter {
         if (ctrl && !shift && key == Key.S) {
             return Shortcut.SAVE;
         }
+        if (ctrl && !shift && key == Key.O) {
+            return Shortcut.OPEN;
+        }
+        if (ctrl && !shift && key == Key.C) {
+            return Shortcut.COPY;
+        }
+        if (ctrl && !shift && key == Key.V) {
+            return Shortcut.PASTE;
+        }
         if (ctrl && !shift && key == Key.A) {
             return Shortcut.SELECT_ALL_PANEL;
         }
@@ -120,7 +132,7 @@ public final class ShortcutRouter {
      */
     public static boolean isSelectionAction(Shortcut shortcut, Focus focus) {
         return switch (shortcut) {
-            case ACTIVATE, RENAME, DELETE, DUPLICATE, SELECT_ALL_PANEL ->
+            case ACTIVATE, RENAME, DELETE, DUPLICATE, COPY, PASTE, SELECT_ALL_PANEL ->
                     focus == Focus.HIERARCHY || focus == Focus.PROJECT
                             || focus == Focus.INSPECTOR;
             default -> false;

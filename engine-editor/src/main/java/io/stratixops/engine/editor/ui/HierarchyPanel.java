@@ -275,7 +275,8 @@ final class HierarchyPanel {
         switch (activated) {
             case "duplicate" -> {
                 if (target != null) {
-                    ctx.execute(EditCommands.duplicate(state.scene(), target, state.registry()));
+                    state.selection().select(target);
+                    ctx.controller.duplicateSelection();
                 }
             }
             case "rename" -> {
@@ -285,11 +286,10 @@ final class HierarchyPanel {
                 }
             }
             case "delete" -> {
-                List<GameObject> objects = target != null ? List.of(target) : state.selection().objects();
-                if (!objects.isEmpty()) {
-                    ctx.execute(EditCommands.delete(state.scene(), objects));
-                    state.selection().clear();
+                if (target != null) {
+                    state.selection().select(target);
                 }
+                ctx.controller.deleteSelection();
             }
             case "create" -> EditorCommandCatalog.create(ctx, null);
             case "create-child" -> {

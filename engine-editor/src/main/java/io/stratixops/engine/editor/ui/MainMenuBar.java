@@ -2,7 +2,6 @@ package io.stratixops.engine.editor.ui;
 
 import imgui.ImGui;
 import io.stratixops.engine.editor.PanelKind;
-import io.stratixops.engine.editor.command.EditCommands;
 import io.stratixops.engine.scene.GameObject;
 import io.stratixops.engine.scene.Scene;
 
@@ -33,6 +32,9 @@ final class MainMenuBar {
         if (ImGui.beginMenu("File")) {
             if (ImGui.menuItem("New Scene")) {
                 ctx.state.openScene(new Scene("Untitled"));
+            }
+            if (ImGui.menuItem("Open Scene", "Ctrl+O")) {
+                ctx.onOpenScene.run();
             }
             if (ImGui.menuItem("Save Scene", "Ctrl+S")) {
                 ctx.onSaveScene.run();
@@ -75,16 +77,23 @@ final class MainMenuBar {
             }
             ImGui.separator();
             boolean hasSelection = !ctx.state.selection().isEmpty();
+            if (ImGui.menuItem("Copy", "Ctrl+C", false, hasSelection)) {
+                int count = ctx.controller.copySelection();
+                ctx.log(io.stratixops.engine.editor.console.LogLevel.INFO,
+                        "Copied " + count + (count == 1 ? " object" : " objects"));
+            }
+            if (ImGui.menuItem("Paste", "Ctrl+V", false, !ctx.controller.clipboardEmpty())) {
+                int count = ctx.controller.clipboardSize();
+                ctx.controller.paste();
+                ctx.log(io.stratixops.engine.editor.console.LogLevel.INFO,
+                        "Pasted " + count + (count == 1 ? " object" : " objects"));
+            }
+            ImGui.separator();
             if (ImGui.menuItem("Duplicate", "Ctrl+D", false, hasSelection)) {
-                GameObject primary = ctx.state.selection().primary();
-                if (primary != null) {
-                    ctx.execute(EditCommands.duplicate(ctx.state.scene(), primary,
-                            ctx.state.registry()));
-                }
+                ctx.controller.duplicateSelection();
             }
             if (ImGui.menuItem("Delete", "Del", false, hasSelection)) {
-                ctx.execute(EditCommands.delete(ctx.state.scene(), ctx.state.selection().objects()));
-                ctx.state.selection().clear();
+                ctx.controller.deleteSelection();
             }
             ImGui.endMenu();
         }
@@ -93,11 +102,11 @@ final class MainMenuBar {
     private static void gameObjectMenu(EditorContext ctx) {
         if (ImGui.beginMenu("GameObject")) {
             if (ImGui.menuItem("Create Empty")) {
-                EditorCommandCatalog.create(ctx, null);
+                ctx.controller.createGameObject("GameObject");
             }
             GameObject primary = ctx.state.selection().primary();
             if (ImGui.menuItem("Create Empty Child", "", false, primary != null)) {
-                EditorCommandCatalog.create(ctx, primary);
+                ctx.controller.createChild("GameObject");
             }
             ImGui.endMenu();
         }
