@@ -9,6 +9,9 @@
 // Production build/packaging (distributions, publishing, templates) is owned
 // by the DX & Build Engineer and is intentionally not configured here.
 
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
+
 plugins {
     java
     jacoco
@@ -32,7 +35,9 @@ val gpuTestsEnabled: Boolean =
     (findProperty("stratix.qa.gpuTests") as String?)?.toBoolean() ?: false
 
 subprojects {
-    apply(plugin = "java")
+    // `java-library` (a superset of `java`) so engine modules can express their
+    // dependency direction with `api(...)` (STR-2 §7).
+    apply(plugin = "java-library")
     apply(plugin = "jacoco")
 
     extensions.configure<JavaPluginExtension> {
@@ -119,4 +124,65 @@ tasks.register("printQualityGate") {
         println("  min line coverage     : $minLineCoverage (per module with main sources)")
         println("  gpu/display tests     : ${if (gpuTestsEnabled) "ENABLED" else "excluded ('gpu' tag opt-in)"}")
     }
+}
+
+// ---------------------------------------------------------------------------
+// DX & Build (STR-7): Maven Local publishing and distributable packaging.
+//
+// Owned by the DX & Build Engineer; the QA harness above is intentionally left
+// untouched. The MVP distribution path is `./gradlew publishToMavenLocal`,
+// which publishes the engine modules under `io.stratixops`. `assembleDist`
+// produces the release archives that the DevOps release workflow collects from
+// `build/distributions`. Both honor `project.version`, so
+// `gradle/release-init.gradle.kts` stamps the release tag through unchanged.
+// ---------------------------------------------------------------------------
+
+// Modules that ship to users. engine-api/core/render are transitive details;
+// engine-desktop is *the* user-facing artifact and gem-dash-sample is the
+// playable sample. The map value is the published Maven artifactId.
+val dxPublishedProjects = mapOf(
+    ":engine-api" to "engine-api",
+    ":engine-core" to "engine-core",
+    ":engine-render" to "engine-render",
+    ":engine-desktop" to "engine-desktop",
+    ":samples:gem-dash" to "gem-dash-sample",
+)
+
+subprojects {
+    val publishedArtifactId = dxPublishedProjects[path] ?: return@subprojects
+
+    apply(plugin = "maven-publish")
+    extensions.configure<PublishingExtension> {
+        publications {
+            create<MavenPublication>("maven") {
+                from(components["java"])
+                artifactId = publishedArtifactId
+            }
+        }
+    }
+}
+
+// The onboarding template is a *standalone* build that lives inside the
+// monorepo; ship it as `hello-engine-<version>.zip` (GETTING_STARTED §3).
+val templateDist by tasks.registering(Zip::class) {
+    group = "distribution"
+    description = "Packages the hello-engine onboarding template as a zip."
+    archiveBaseName.set("hello-engine")
+    // Resolve the version lazily so `gradle/release-init.gradle.kts` (which
+    // stamps the release version in `projectsEvaluated`) is reflected in the
+    // archive name.
+    archiveVersion.set(provider { project.version.toString() })
+    destinationDirectory.set(layout.buildDirectory.dir("distributions"))
+    from("templates/hello-engine") {
+        exclude("**/build/**", "**/.gradle/**")
+    }
+}
+
+// Single entry point used by the release workflow and `scripts/release/*`.
+tasks.register("assembleDist") {
+    group = "distribution"
+    description = "Builds all distributable archives into build/distributions."
+    dependsOn(templateDist)
+    // The playable sample ships as a runnable distribution (application plugin).
+    dependsOn(":samples:gem-dash:distZip")
 }

@@ -54,3 +54,14 @@ depending on each other. `settings.gradle.kts` auto-discovers top-level modules.
 - **`engine-render` depends on `engine-core` (bootstrap in render).** Fewer
   modules, but serializes the two coders and puts graphics above logic.
   Rejected in favor of the thin `engine-desktop` seam.
+
+## Amendment (STR-32, 2026-10-05)
+
+Decision 3 says `engine-core` implements "loop, scene". A concurrent MVP-era
+model (`Entity` / abstract `Scene` / `SceneManager`) briefly duplicated
+`io.stratixops.engine.scene` alongside the committed STR-21
+`GameObject`/`Component` model. **ADR-0009 resolves this: the STR-21
+`GameObject` model is the single canonical `engine-core` scene model, and the
+MVP `Entity`/abstract `Scene`/`SceneManager` are retired (transition management
+deferred to the editor track).** `GameLoop` is retained as the model-agnostic
+timing owner. The two are merged on `feat/str-32-scene-reconcile`.

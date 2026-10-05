@@ -53,10 +53,11 @@ val sampleRuntime: Configuration by configurations.creating {
 }
 
 dependencies {
-    // The gameplay-facing engine surface (Engine, EngineContext, Renderer, ...).
-    // `engine-api` is the frozen public contract (STR-13); the runtime and
-    // rendering implementations land behind it (STR-5/STR-6).
-    implementation("io.stratixops:engine-api:$engineVersion")
+    // The user-facing engine artifact. `engine-desktop` is the one dependency a
+    // game needs: it pulls the frozen public API (engine-api) plus the core
+    // runtime and desktop rendering backend, with the LWJGL natives, so
+    // `Engine.run(...)` boots a window on Windows/macOS/Linux.
+    implementation("io.stratixops:engine-desktop:$engineVersion")
 
     // Gem Dash sample, launched by `runSample`. Ships with the engine.
     sampleRuntime("io.stratixops:gem-dash-sample:$engineVersion")

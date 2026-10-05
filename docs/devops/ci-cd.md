@@ -25,7 +25,9 @@ publishing) is owned here.
 - **Artifacts (always uploaded, even on failure):** HTML test reports, JUnit
   XML, JaCoCo reports. Retention is the GitHub default (90 days).
 - **GPU/display tests** are tagged `gpu`, excluded by default, and run under
-  `xvfb` only on PRs and `main` to keep pushes fast.
+  `xvfb` only on PRs and `main` to keep pushes fast. That job invokes `check`
+  (not bare `test`), so GPU-backed modules are coverage-verified against their
+  full class set (`docs/qa/quality-gate.md` → "GPU-backed module coverage").
 
 ### Required status checks
 

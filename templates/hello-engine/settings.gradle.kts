@@ -14,13 +14,15 @@
 rootProject.name = "hello-engine"
 
 val monorepoRoot = file("../..")
-val localEngine = monorepoRoot.resolve("engine-api")
+val localEngine = monorepoRoot.resolve("engine-desktop")
 
 if (monorepoRoot.resolve("settings.gradle.kts").exists() && localEngine.isDirectory) {
     includeBuild(monorepoRoot) {
         dependencySubstitution {
-            substitute(module("io.stratixops:engine-api"))
-                .using(project(":engine-api"))
+            substitute(module("io.stratixops:engine-desktop"))
+                .using(project(":engine-desktop"))
+            substitute(module("io.stratixops:gem-dash-sample"))
+                .using(project(":samples:gem-dash"))
         }
     }
 }

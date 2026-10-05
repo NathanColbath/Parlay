@@ -22,3 +22,10 @@ file(".")
     }
     ?.sortedBy { it.name }
     ?.forEach { include(it.name) }
+
+// The playable Gem Dash sample lives in a *nested* module
+// (`samples/gem-dash`) that the top-level auto-discovery above cannot see, so
+// include it explicitly (STR-2 spec §7). Its artifact is
+// `io.stratixops:gem-dash-sample`; its main class is
+// `io.stratixops.gemdash.Main`.
+include("samples:gem-dash")

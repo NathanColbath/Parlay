@@ -88,5 +88,16 @@ jobs:
       - name: Set up Gradle (with caching)
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run GPU-tagged tests under a virtual display
-        run: xvfb-run --auto-servernum ./gradlew test -Pstratix.qa.gpuTests=true --no-daemon --stacktrace
+      # `check` (not bare `test`) so GPU-backed modules are coverage-verified
+      # against their *full* class set while the GPU suite is active. The
+      # headless Build & Test jobs keep the default scoped rule (STR-31).
+      - name: Run GPU-tagged tests and enforce the gate under a virtual display
+        run: xvfb-run --auto-servernum ./gradlew check jacocoTestReport -Pstratix.qa.gpuTests=true --no-daemon --stacktrace
+
+      - name: Upload GPU JaCoCo coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-gpu-linux
+          path: "**/build/reports/jacoco/"
+          if-no-files-found: ignore

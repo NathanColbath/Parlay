@@ -40,6 +40,9 @@ Rules:
 
 - Default CI excludes `gpu` so headless runners stay green.
 - GPU tests run on Linux under `xvfb-run` with `-Pstratix.qa.gpuTests=true`.
+- The `gpu-tests` job runs `check` (not bare `test`) so a GPU-backed module is
+  coverage-verified against its full class set; the headless jobs keep the
+  scoped rule. See `quality-gate.md` "GPU-backed module coverage".
 - A test that cannot run headless and is not tagged `gpu` is a bug.
 
 ## What the engine team must test (acceptance)

@@ -121,3 +121,12 @@ Dependency direction is **strictly one-way**. `engine-api` depends on nothing.
 - **A separate `engine-platform` module for window/GL.** Cleaner in principle, but
   an extra module for Phase 1 with no present consumer; `engine-render` is already
   the platform layer. Deferred.
+
+## Amendment (STR-32, 2026-10-05)
+
+`engine-core`'s scene model is the STR-21 `GameObject`/`Component`/`Behaviour`
+model with the final `Scene` and the core-side `SceneRenderer`; the concurrent
+MVP-era `Entity`/abstract `Scene`/`SceneManager` are retired. See
+[ADR-0009](ADR-0009-scene-model-reconciliation.md) for the ruling, the merge
+order, and the workspace-isolation policy. This does not change the module
+graph above.
