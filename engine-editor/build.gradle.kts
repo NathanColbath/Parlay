@@ -14,9 +14,19 @@ plugins {
     `java-library`
 }
 
+// The ImGui version is pinned once (ADR-0005 section 2) in gradle.properties;
+// engine-imgui declares the binding as `implementation`, so the terminal editor
+// application re-declares the same pinned coordinate to compile its panel code
+// against ImGui while still keeping the native backends owned by engine-imgui.
+val imguiVersion: String =
+    (findProperty("stratix.imguiVersion") as String?) ?: "1.92.7.1"
+
 dependencies {
     api(project(":engine-core"))
     api(project(":engine-serialize"))
+    implementation(project(":engine-imgui"))
+    implementation(project(":engine-render"))
+    implementation("io.github.spair:imgui-java-binding:$imguiVersion")
 }
 
 // The headless editor model is measured; the ImGui panel layer added later is
