@@ -168,6 +168,38 @@ public final class EditCommands {
                 () -> detach(scene, clone));
     }
 
+    /**
+     * Attaches a component, undoable without driving destroy hooks.
+     *
+     * @param object    the owning object
+     * @param component the component
+     * @return the command
+     */
+    public static Command addComponent(GameObject object, Component component) {
+        return new SimpleCommand("Add " + component.getClass().getSimpleName(),
+                () -> object.addComponent(component),
+                () -> object.components().remove(component));
+    }
+
+    /**
+     * Detaches a component, restorable to its original slot.
+     *
+     * @param object    the owning object
+     * @param component the component
+     * @return the command
+     */
+    public static Command removeComponent(GameObject object, Component component) {
+        int index = object.components().indexOf(component);
+        return new SimpleCommand("Remove " + component.getClass().getSimpleName(),
+                () -> object.components().remove(component),
+                () -> {
+                    if (!object.components().contains(component)) {
+                        object.components().add(Math.min(Math.max(index, 0), object.components().size()),
+                                component);
+                    }
+                });
+    }
+
     private static List<Slot> slotsOf(Scene scene, List<GameObject> objects) {
         List<Slot> slots = new ArrayList<>();
         for (GameObject object : objects) {
